@@ -383,7 +383,6 @@
             text-align: left;
         }
         
-        /* Стили для кнопки печати */
         .print-button {
             background: none;
             border: none;
@@ -405,7 +404,6 @@
             transform: scale(1.1);
         }
 
-        /* Стили для кнопки изображения */
         .image-button {
             background: none;
             border: none;
@@ -434,7 +432,6 @@
             font-style: italic;
         }
         
-        /* Кнопка "Наверх" */
         .scroll-to-top-btn {
             position: fixed;
             bottom: 30px;
@@ -469,7 +466,6 @@
             display: flex;
         }
         
-        /* Новое модальное окно печати */
         .print-modal-new {
             position: fixed;
             top: 0;
@@ -518,7 +514,6 @@
             border: 1px solid #bee5eb;
         }
         
-        /* Контейнер для предпросмотра ценника */
         .price-tag-preview {
             margin: 20px 0;
             border: 2px dashed #ddd;
@@ -591,9 +586,6 @@
             border: 1px solid #ffeaa7;
         }
         
-        /* НОВЫЙ СТИЛЬ: Выбор типа ценника УДАЛЕН */
-        
-        /* Модальное окно камеры */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -707,7 +699,6 @@
             font-size: 11px;
         }
 
-        /* Модальное окно результатов сканирования */
         .scan-result-frame {
             max-width: 550px;
             animation: successSlide 0.5s ease-out;
@@ -1028,7 +1019,7 @@
         const SHOW_WHOLESALE_PLUS = false; // false - скрыть, true - показать строку Оптовая+
  
 		// ===== ДАТА =====
-        const DATA_UPDATE_DATE = "02.02.2026"; // Будет заполнена AHK скриптом: "03.02.2025"
+        const DATA_UPDATE_DATE = "03.02.2026"; // Будет заполнена AHK скриптом: "03.02.2025"
  
         // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
         let stream = null;
@@ -16532,7 +16523,7 @@
 2003000001655;PK-2423;Сумка T маленькая, текстиль, цвет в асортименте;385,00;600,00;397,00;122;200;11/F-4.4;Ck000007357_1;;;;Ck000007357_1;
 `;
 
-function parseStockValue(value) {
+        function parseStockValue(value) {
             if (!value) return 0;
             const cleanValue = value.toString().replace(/\s/g, '').replace(/\u00A0/g, '');
             return parseInt(cleanValue) || 0;
@@ -18136,8 +18127,7 @@ function parseStockValue(value) {
             }
         }
 
-        // ===== ФУНКЦИИ ДЛЯ КНОПКИ "НАВЕРХ" =====
-        
+     
         function initScrollToTopButton() {
             const scrollToTopBtn = document.getElementById('scrollToTopBtn');
             
