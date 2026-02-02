@@ -218,7 +218,6 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             z-index: 100;
             max-width: 300px;
-            font-size: 12px;
         }
         
         .barcode-list {
@@ -592,48 +591,8 @@
             border: 1px solid #ffeaa7;
         }
         
-        /* НОВЫЙ СТИЛЬ: Выбор типа ценника */
-        .price-tag-type-selector {
-            margin: 20px 0;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-        }
+        /* НОВЫЙ СТИЛЬ: Выбор типа ценника УДАЛЕН */
         
-        .price-tag-type-option {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 8px 16px;
-            border-radius: 5px;
-            border: 2px solid #ddd;
-            background: white;
-            transition: all 0.3s;
-        }
-        
-        .price-tag-type-option:hover {
-            border-color: #4CAF50;
-            background-color: #f9f9f9;
-        }
-        
-        .price-tag-type-option.selected {
-            border-color: #4CAF50;
-            background-color: #e8f5e9;
-        }
-        
-        .price-tag-type-radio {
-            margin-right: 8px;
-            cursor: pointer;
-        }
-        
-        .price-tag-type-label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-        }
-
         /* Модальное окно камеры */
         .modal-overlay {
             position: fixed;
@@ -1049,19 +1008,7 @@
             <div id="printerStatus" class="printer-status printer-connecting">
                 Подключаюсь к принтеру...
             </div>
-            
-            <!-- НОВЫЙ БЛОК: Выбор типа ценника -->
-            <div class="price-tag-type-selector" id="priceTagTypeSelector">
-                <div class="price-tag-type-option selected" data-type="regular">
-                    <input type="radio" id="typeRegular" name="priceTagType" class="price-tag-type-radio" value="regular" checked>
-                    <label for="typeRegular" class="price-tag-type-label">Обычный</label>
-                </div>
-                <div class="price-tag-type-option" data-type="large">
-                    <input type="radio" id="typeLarge" name="priceTagType" class="price-tag-type-radio" value="large">
-                    <label for="typeLarge" class="price-tag-type-label">Большой</label>
-                </div>
-            </div>
-            
+
             <div class="price-tag-preview">
                 <canvas id="priceTagPreviewCanvas" class="price-tag-canvas" width="440" height="284"></canvas>
             </div>
@@ -1081,7 +1028,7 @@
         const SHOW_WHOLESALE_PLUS = false; // false - скрыть, true - показать строку Оптовая+
  
 		// ===== ДАТА =====
-        const DATA_UPDATE_DATE = "01.02.2026"; // Будет заполнена AHK скриптом: "03.02.2025"
+        const DATA_UPDATE_DATE = "02.02.2026"; // Будет заполнена AHK скриптом: "03.02.2025"
  
         // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
         let stream = null;
@@ -1096,9 +1043,6 @@
         
         // Текущий товар для печати
         let currentProductForPrint = null;
-        
-        // НОВАЯ ПЕРЕМЕННАЯ: тип ценника (по умолчанию обычный)
-        let currentPriceTagType = 'regular';
         
         // Пример данных
         const productsData = `2002000149572;620-107K;Портмоне + зажим "SOMUCH" мат, цв: черный;570,00;750,00;587,00;;;;;;;;Sk000009622_1;
@@ -16588,7 +16532,7 @@
 2003000001655;PK-2423;Сумка T маленькая, текстиль, цвет в асортименте;385,00;600,00;397,00;122;200;11/F-4.4;Ck000007357_1;;;;Ck000007357_1;
 `;
 
-        function parseStockValue(value) {
+function parseStockValue(value) {
             if (!value) return 0;
             const cleanValue = value.toString().replace(/\s/g, '').replace(/\u00A0/g, '');
             return parseInt(cleanValue) || 0;
@@ -16968,18 +16912,12 @@
 
         // ===== ФУНКЦИИ ДЛЯ СОЗДАНИЯ И ПЕЧАТИ ЦЕННИКА =====
 
-        function createPriceTagImage(product, type = 'regular') {
+        function createPriceTagImage(product) {
             const canvas = document.createElement('canvas');
             
-            if (type === 'large') {
-                // ВТОРОЙ ВИД ЦЕННИКА (БОЛЬШОЙ)
-                canvas.width = 440;
-                canvas.height = 300;
-            } else {
-                // ПЕРВЫЙ ВИД ЦЕННИКА (ОБЫЧНЫЙ)
-                canvas.width = 440; // 55мм
-                canvas.height = 284; // 38мм
-            }
+            // Размеры для нового формата
+            canvas.width = 440; // 55мм
+            canvas.height = 284; // 38мм
             
             const ctx = canvas.getContext('2d');
             
@@ -16991,197 +16929,199 @@
             ctx.fillStyle = 'black';
             ctx.textAlign = 'center';
             
-            // БАЗОВЫЕ РАЗМЕРЫ С УВЕЛИЧЕНИЕМ 50%
-            const textScale = 1.5;
+            // НОВЫЕ РАЗМЕРЫ ШРИФТА (как в требованиях)
+            const textScale = 1;
             
-            if (type === 'large') {
-                // РАЗМЕРЫ ДЛЯ БОЛЬШОГО ЦЕННИКА
-                const baseFonts = {
-                    company: 22 * textScale,
-                    article: 18 * textScale,
-                    product: 16 * textScale,
-                    price: 88 * textScale,  // Изменено с 44 на 88
-                    date: 14 * textScale
-                };
-                
-                // 1. НАЗВАНИЕ КОМПАНИИ - ПО ЦЕНТРУ
-                ctx.font = `bold ${baseFonts.company}px "Arial"`;
-                ctx.fillText('ООО "КУБАНЬСТАР"', canvas.width / 2, 30);
-                
-                // ЖИРНАЯ линия под названием
-                ctx.beginPath();
-                ctx.moveTo(-8, 40);
-                ctx.lineTo(canvas.width - 0, 40);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                
-                // 2. АРТИКУЛ И КОЛИЧЕСТВО В КОРОБКЕ
-                ctx.font = `bold ${baseFonts.article}px "Arial"`;
-                ctx.textAlign = 'left';
-                ctx.fillText(product.article, 6, 70);
-                ctx.textAlign = 'right';
-                ctx.fillText('', canvas.width - 6, 70); // Удалено: boxQuantity
-                
-                // ЖИРНАЯ линия
-                ctx.beginPath();
-                ctx.moveTo(-8, 80);
-                ctx.lineTo(canvas.width - 0, 80);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.lineWidth = 1;
-                
-                // 3. НАЗВАНИЕ ТОВАРА - ПО ЦЕНТРУ (обрезаем если слишком длинное)
-                let productName = product.name;
-                if (productName.length > 55) {
-                    productName = productName.substring(0, 55) + '...';
-                }
-                
-                ctx.font = `bold ${baseFonts.product}px "Arial"`;
-                ctx.textAlign = 'center';
-                
-                // Разбиваем название на две строки если нужно
-                const words = productName.split(' ');
-                let line1 = '';
-                let line2 = '';
-                
-                for (const word of words) {
-                    if ((line1 + ' ' + word).length <= 25 && !line2) {
-                        if (line1) line1 += ' ';
-                        line1 += word;
-                    } else {
-                        if (line2) line2 += ' ';
-                        line2 += word;
-                    }
-                }
-                
-                ctx.fillText(line1, canvas.width / 2, 110);
-                if (line2) {
-                    ctx.fillText(line2, canvas.width / 2, 135);
-                }
-                
-                // ОЧЕНЬ ЖИРНАЯ линия перед ценой
-                ctx.beginPath();
-                ctx.moveTo(-8, 145);
-                ctx.lineTo(canvas.width - 0, 145);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.lineWidth = 1;
-                
-                // 4. ЦЕНА - ПО ЦЕНТРУ
-                // Используем исправленную функцию formatNumber с флагом isPrice
-                const priceFormatted = formatNumber(product.wholesalePrice, true);
-                
-                ctx.font = `bold ${baseFonts.price}px "Arial"`;
-                ctx.fillText(priceFormatted, canvas.width / 2, 255);
-                
-                // ЖИРНАЯ линия под ценой
-                ctx.beginPath();
-                ctx.moveTo(-8, 271);
-                ctx.lineTo(canvas.width - 0, 271);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                
-                // 5. ДАТА - ПО ЦЕНТРУ
-                const today = new Date();
-                const dateStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth()+1).toString().padStart(2, '0')}.${today.getFullYear()}`;
-                ctx.font = `${baseFonts.date}px "Arial"`;
-                ctx.fillText(dateStr, canvas.width / 2, 291);
-                
+            const fonts = {
+                article: 14 * textScale,      // 14px
+                product: 16 * textScale,      // 16px
+                price: 18 * textScale,        // 18px
+                price2: 18 * textScale,       // 18px
+                date: 12 * textScale,         // 12px
+                company: 14 * textScale       // 14px
+            };
+            
+            // Текущая позиция по Y
+            let yPos = 20;
+            const lineHeight = 20;
+            const thickLineHeight = 3;
+            
+            // 1. АРТИКУЛ (первая строка)
+            ctx.font = `bold ${fonts.article}px "Arial"`;
+            ctx.fillText(product.article, canvas.width / 2, yPos);
+            yPos += lineHeight;
+            
+            // Полоса после артикула
+            ctx.beginPath();
+            ctx.moveTo(10, yPos);
+            ctx.lineTo(canvas.width - 10, yPos);
+            ctx.lineWidth = thickLineHeight;
+            ctx.stroke();
+            yPos += 10;
+            
+            // 2. НАИМЕНОВАНИЕ ТОВАРА (умный перенос строк)
+            ctx.font = `${fonts.product}px "Arial"`;
+            
+            // Разбиваем наименование на слова
+            const productName = product.name;
+            const words = productName.split(' ');
+            
+            // Максимальное количество символов на строку
+            const maxCharsPerLine = 75; // Общий максимум
+            
+            // Пытаемся разбить на строки
+            let lines = [];
+            let currentLine = '';
+            
+            // Сначала пытаемся поместить в одну строку (до 75 символов)
+            if (productName.length <= maxCharsPerLine) {
+                lines.push(productName);
             } else {
-                // РАЗМЕРЫ ДЛЯ ОБЫЧНОГО ЦЕННИКА
-                const baseFonts = {
-                    company: 22 * textScale,    // 33px
-                    article: 18 * textScale,    // 27px
-                    product: 16 * textScale,    // 24px
-                    price: 44 * textScale,      // 66px (+10%)
-                    date: 14 * textScale        // 21px
-                };
+                // Пытаемся разбить на 2 строки
+                let possibleTwoLines = splitIntoTwoLines(productName, maxCharsPerLine);
                 
-                // 1. НАЗВАНИЕ КОМПАНИИ - ПО ЦЕНТРУ
-                ctx.font = `bold ${baseFonts.company}px "Arial"`;
-                ctx.fillText('ООО "КУБАНЬСТАР"', canvas.width / 2, 30);
-                
-                // ЖИРНАЯ линия под названием
-                ctx.beginPath();
-                ctx.moveTo(-8, 40);
-                ctx.lineTo(canvas.width - 0, 40);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                
-                // 2. АРТИКУЛ И КОЛИЧЕСТВО В КОРОБКЕ
-                ctx.font = `bold ${baseFonts.article}px "Arial"`;
-                ctx.textAlign = 'left';
-                ctx.fillText(product.article, 6, 70);
-                ctx.textAlign = 'right';
-                ctx.fillText('', canvas.width - 6, 70); // Удалено: boxQuantity
-                
-                // ЖИРНАЯ линия
-                ctx.beginPath();
-                ctx.moveTo(-8, 80);
-                ctx.lineTo(canvas.width - 0, 80);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.lineWidth = 1;
-                
-                // 3. НАЗВАНИЕ ТОВАРА - ПО ЦЕНТРУ (обрезаем если слишком длинное)
-                let productName = product.name;
-                if (productName.length > 55) {
-                    productName = productName.substring(0, 55) + '...';
+                if (possibleTwoLines && possibleTwoLines.length === 2) {
+                    lines = possibleTwoLines;
+                } else {
+                    // Разбиваем на 3 строки
+                    lines = splitIntoThreeLines(productName, maxCharsPerLine);
                 }
-                
-                ctx.font = `bold ${baseFonts.product}px "Arial"`;
-                ctx.textAlign = 'center';
-                
-                // Разбиваем название на две строки если нужно
-                const words = productName.split(' ');
-                let line1 = '';
-                let line2 = '';
-                
-                for (const word of words) {
-                    if ((line1 + ' ' + word).length <= 25 && !line2) {
-                        if (line1) line1 += ' ';
-                        line1 += word;
-                    } else {
-                        if (line2) line2 += ' ';
-                        line2 += word;
-                    }
-                }
-                
-                ctx.fillText(line1, canvas.width / 2, 110);
-                if (line2) {
-                    ctx.fillText(line2, canvas.width / 2, 135);
-                }
-                
-                // ОЧЕНЬ ЖИРНАЯ линия перед ценой
-                ctx.beginPath();
-                ctx.moveTo(-8, 155);
-                ctx.lineTo(canvas.width - 0, 155);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.lineWidth = 1;
-                
-                // 4. ЦЕНА - ПО ЦЕНТРУ
-                // Используем исправленную функцию formatNumber с флагом isPrice
-                const priceFormatted = formatNumber(product.wholesalePrice, true);
-                
-                ctx.font = `bold ${baseFonts.price}px "Arial"`;
-                ctx.fillText(`${priceFormatted} Руб.`, canvas.width / 2, 207 + 12);
-                
-                // ЖИРНАЯ линия под ценой
-                ctx.beginPath();
-                ctx.moveTo(-8, 225 + 12);
-                ctx.lineTo(canvas.width - 0, 225 + 12);
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                
-                // 5. ДАТА - ПО ЦЕНТРУ
-                const today = new Date();
-                const dateStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth()+1).toString().padStart(2, '0')}.${today.getFullYear()}`;
-                ctx.font = `${baseFonts.date}px "Arial"`;
-                ctx.fillText(dateStr, canvas.width / 2, 245 + 20);
             }
             
+            // Отображаем строки по центру
+            lines.forEach(line => {
+                ctx.fillText(line.trim(), canvas.width / 2, yPos);
+                yPos += lineHeight;
+            });
+            
+            // Полоса после наименования
+            ctx.beginPath();
+            ctx.moveTo(10, yPos);
+            ctx.lineTo(canvas.width - 10, yPos);
+            ctx.lineWidth = thickLineHeight;
+            ctx.stroke();
+            yPos += 10;
+            
+            // 3. РОЗНИЧНАЯ ЦЕНА (Роз: + "Розничная цена" Руб.)
+            ctx.font = `bold ${fonts.price}px "Arial"`;
+            
+            // Используем исправленную функцию formatNumber для правильного форматирования
+            const retailPriceFormatted = formatNumber(product.retailPrice, true);
+            ctx.fillText(`РОЗ: ${retailPriceFormatted} Руб.`, canvas.width / 2, yPos);
+            yPos += lineHeight;
+            
+            // Полоса после цены
+            ctx.beginPath();
+            ctx.moveTo(10, yPos);
+            ctx.lineTo(canvas.width - 10, yPos);
+            ctx.lineWidth = thickLineHeight;
+            ctx.stroke();
+            yPos += 10;
+            
+            // 4. (АРТ000+"оптовая цена")
+            ctx.font = `bold ${fonts.price2}px "Arial"`;
+            
+            // Форматируем оптовую цену
+            const wholesalePriceNum = parseFloatValue(product.wholesalePrice);
+            const wholesalePriceFormatted = Math.round(wholesalePriceNum).toString();
+            const wholesaleCode = wholesalePriceFormatted.padStart(6, '0');
+            ctx.fillText(`АРТ000${wholesaleCode}`, canvas.width / 2, yPos);
+            yPos += lineHeight;
+            
+            // Полоса после второго артикула
+            ctx.beginPath();
+            ctx.moveTo(10, yPos);
+            ctx.lineTo(canvas.width - 10, yPos);
+            ctx.lineWidth = thickLineHeight;
+            ctx.stroke();
+            yPos += 10;
+            
+            // 5. ДАТА
+            const today = new Date();
+            const dateStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth()+1).toString().padStart(2, '0')}.${today.getFullYear()}`;
+            ctx.font = `${fonts.date}px "Arial"`;
+            ctx.fillText(dateStr, canvas.width / 2, yPos);
+            yPos += lineHeight;
+            
+            // Полоса после даты
+            ctx.beginPath();
+            ctx.moveTo(10, yPos);
+            ctx.lineTo(canvas.width - 10, yPos);
+            ctx.lineWidth = thickLineHeight;
+            ctx.stroke();
+            yPos += 10;
+            
+            // 6. КОМПАНИЯ
+            ctx.font = `bold ${fonts.company}px "Arial"`;
+            ctx.fillText('ИП Мааруф Р.', canvas.width / 2, yPos);
+            
             return canvas;
+        }
+
+        // Функция для разбивки на 2 строки
+        function splitIntoTwoLines(text, maxChars) {
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = '';
+            
+            // Ищем оптимальное место для разрыва (около середины)
+            const middle = Math.floor(text.length / 2);
+            let bestBreakIndex = -1;
+            
+            for (let i = 0; i < text.length; i++) {
+                if (text[i] === ' ' && Math.abs(i - middle) < Math.abs(bestBreakIndex - middle)) {
+                    bestBreakIndex = i;
+                }
+            }
+            
+            if (bestBreakIndex !== -1) {
+                const line1 = text.substring(0, bestBreakIndex).trim();
+                const line2 = text.substring(bestBreakIndex + 1).trim();
+                
+                // Проверяем, что обе строки не превышают лимит
+                if (line1.length <= maxChars && line2.length <= maxChars) {
+                    return [line1, line2];
+                }
+            }
+            
+            return null;
+        }
+
+        // Функция для разбивки на 3 строки
+        function splitIntoThreeLines(text, maxChars) {
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = '';
+            
+            for (const word of words) {
+                // Если добавление слова не превышает лимит
+                if ((currentLine + ' ' + word).length <= maxChars / 2) {
+                    if (currentLine) currentLine += ' ';
+                    currentLine += word;
+                } else {
+                    // Если уже есть строка, сохраняем её
+                    if (currentLine) {
+                        lines.push(currentLine);
+                    }
+                    currentLine = word;
+                    
+                    // Если уже есть 2 строки, остальное собираем в третью
+                    if (lines.length === 2) {
+                        currentLine = '';
+                        // Собираем все оставшиеся слова
+                        const remainingWords = words.slice(words.indexOf(word));
+                        lines.push(remainingWords.join(' '));
+                        break;
+                    }
+                }
+            }
+            
+            // Добавляем последнюю строку если нужно
+            if (currentLine && lines.length < 3) {
+                lines.push(currentLine);
+            }
+            
+            return lines;
         }
 
         function canvasToEscPosBitmap(canvas) {
@@ -17246,7 +17186,7 @@
             return command;
         }
 
-        async function printPriceTag(product, type = 'regular') {
+        async function printPriceTag(product) {
             try {
                 if (!isPrinterConnected) {
                     const connected = await connectToPrinter();
@@ -17255,7 +17195,7 @@
                     }
                 }
                 
-                const canvas = createPriceTagImage(product, type);
+                const canvas = createPriceTagImage(product);
                 const bitmap = canvasToEscPosBitmap(canvas);
                 const imageCommand = createEscPosImageCommand(bitmap);
                 
@@ -17290,7 +17230,7 @@
             }
         }
 
-        function updatePriceTagPreview(product, type = 'regular') {
+        function updatePriceTagPreview(product) {
             const canvas = document.getElementById('priceTagPreviewCanvas');
             const ctx = canvas.getContext('2d');
             
@@ -17298,14 +17238,9 @@
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Устанавливаем размеры canvas в зависимости от типа ценника
-            if (type === 'large') {
-                canvas.width = 440;
-                canvas.height = 300;
-            } else {
-                canvas.width = 440;
-                canvas.height = 284;
-            }
+            // Устанавливаем фиксированные размеры
+            canvas.width = 440;
+            canvas.height = 284;
             
             // Уменьшаем масштаб для предпросмотра
             const scale = 0.7;
@@ -17313,7 +17248,7 @@
             ctx.scale(scale, scale);
             
             // Рисуем ценник
-            const previewCanvas = createPriceTagImage(product, type);
+            const previewCanvas = createPriceTagImage(product);
             ctx.drawImage(previewCanvas, 0, 0);
             
             ctx.restore();
@@ -17336,19 +17271,8 @@
             currentProductForPrint = product;
             document.getElementById('printModal').style.display = 'flex';
             
-            // Сбрасываем выбор типа ценника на обычный
-            currentPriceTagType = 'regular';
-            document.querySelectorAll('.price-tag-type-option').forEach(option => {
-                if (option.getAttribute('data-type') === 'regular') {
-                    option.classList.add('selected');
-                    option.querySelector('input').checked = true;
-                } else {
-                    option.classList.remove('selected');
-                }
-            });
-            
-            // Обновляем предпросмотр с обычным ценником
-            updatePriceTagPreview(product, 'regular');
+            // Обновляем предпросмотр
+            updatePriceTagPreview(product);
             
             // Отключаем кнопку печати
             const printBtn = document.getElementById('printActionBtn');
@@ -17393,7 +17317,7 @@
             printBtn.textContent = 'Печатаю...';
             
             try {
-                await printPriceTag(currentProductForPrint, currentPriceTagType);
+                await printPriceTag(currentProductForPrint);
                 showPrintStatus('Ценник успешно отправлен на печать!', 'success');
                 
                 // Закрываем модальное окно через 1.5 секунды
@@ -18269,9 +18193,6 @@
         // Элементы нового модального окна печати
         const printActionBtn = document.getElementById('printActionBtn');
 
-        // НОВЫЕ ЭЛЕМЕНТЫ: Выбор типа ценника
-        const priceTagTypeSelector = document.getElementById('priceTagTypeSelector');
-
         function updateSearchUI() {
             const mode = getCurrentSearchMode();
             
@@ -18284,49 +18205,6 @@
             }
             
             updateClearButton();
-        }
-
-        // НОВАЯ ФУНКЦИЯ: Обработка выбора типа ценника
-        function setupPriceTagTypeSelector() {
-            const options = priceTagTypeSelector.querySelectorAll('.price-tag-type-option');
-            
-            options.forEach(option => {
-                option.addEventListener('click', function() {
-                    // Удаляем класс selected у всех вариантов
-                    options.forEach(opt => opt.classList.remove('selected'));
-                    
-                    // Добавляем класс selected текущему варианту
-                    this.classList.add('selected');
-                    
-                    // Помечаем соответствующий радиобаттон как выбранный
-                    const radio = this.querySelector('input[type="radio"]');
-                    radio.checked = true;
-                    
-                    // Обновляем текущий тип ценника
-                    currentPriceTagType = this.getAttribute('data-type');
-                    
-                    // Обновляем предпросмотр
-                    if (currentProductForPrint) {
-                        updatePriceTagPreview(currentProductForPrint, currentPriceTagType);
-                    }
-                });
-            });
-            
-            // Также обрабатываем клик по радиобаттону
-            const radios = priceTagTypeSelector.querySelectorAll('input[type="radio"]');
-            radios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        const option = this.closest('.price-tag-type-option');
-                        currentPriceTagType = option.getAttribute('data-type');
-                        
-                        // Обновляем предпросмотр
-                        if (currentProductForPrint) {
-                            updatePriceTagPreview(currentProductForPrint, currentPriceTagType);
-                        }
-                    }
-                });
-            });
         }
 
         // ===== ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ДАТЫ ИЗМЕНЕНИЯ ФАЙЛА =====
@@ -18430,7 +18308,6 @@
             searchInput.focus();
             setupPlatformUI();
             initScrollToTopButton(); // Инициализация кнопки "Наверх"
-            setupPriceTagTypeSelector(); // Инициализация выбора типа ценника
 
 			// Устанавливаем дату обновления если она есть
             if (DATA_UPDATE_DATE && DATA_UPDATE_DATE.trim() !== "") {
