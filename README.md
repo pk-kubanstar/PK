@@ -16532,7 +16532,7 @@
 2003000001655;PK-2423;Сумка T маленькая, текстиль, цвет в асортименте;385,00;600,00;397,00;122;200;11/F-4.4;Ck000007357_1;;;;Ck000007357_1;
 `;
 
-        function parseStockValue(value) {
+function parseStockValue(value) {
             if (!value) return 0;
             const cleanValue = value.toString().replace(/\s/g, '').replace(/\u00A0/g, '');
             return parseInt(cleanValue) || 0;
